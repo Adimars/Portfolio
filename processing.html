@@ -123,105 +123,186 @@
 
     <script>
 
+let billys = [];
+let gameOver = false;
+let billyIMG;
+let homelanderX = 500;
+let homelanderY = 400;
+let m;
+let mouseClick = false;
 
-
-
-// Variables for game elements
-let beams = [];
-let enemies = [];
-let billy;
 let beamsound;
 let pop;
-let score = 0;
-let beamSpeed = 15;
+let homelander;
+let laser;
+let gameControl;
 
 function preload() {
-  // Load assets
-  billy = loadImage("billy.png");
   beamsound = loadSound("laser.wav");
   pop = loadSound("pop.wav");
+  billyIMG = loadImage("billy.png");
 }
 
 function setup() {
-  createCanvas(1500, 900);
+  createCanvas(1500, 830); // Screen size
+  homelander = new Homelander();
+  laser = new Laser();
+  gameControl = new GameControl();
 }
 
 function draw() {
-  background(0);
-
-  // Draw score
-  textSize(40);
-  fill(255);
-  textAlign(RIGHT, TOP);
-  text("Score: " + score, width - 20, 20);
-
-  // Handle beams
-  for (let i = beams.length - 1; i >= 0; i--) {
-    let beam = beams[i];
-    beam.y -= beamSpeed;
-
-    // Draw beam
-    stroke(0, 255, 0);
-    strokeWeight(5);
-    line(beam.x, beam.y, beam.x, beam.y + 20);
-
-    // Remove beams that go out of bounds
-    if (beam.y < 0) {
-      beams.splice(i, 1);
-    }
-  }
-
-  // Handle enemies
-  for (let i = enemies.length - 1; i >= 0; i--) {
-    let enemy = enemies[i];
-    enemy.y += enemy.speed;
-
-    // Draw enemy
-    image(billy, enemy.x, enemy.y, enemy.size, enemy.size);
-
-    // Remove enemies that go out of bounds
-    if (enemy.y > height) {
-      enemies.splice(i, 1);
-    }
-
-    // Check for collisions with beams
-    for (let j = beams.length - 1; j >= 0; j--) {
-      let beam = beams[j];
-      if (dist(beam.x, beam.y, enemy.x + enemy.size / 2, enemy.y + enemy.size / 2) < enemy.size / 2) {
-        // Remove enemy and beam
-        enemies.splice(i, 1);
-        beams.splice(j, 1);
-
-        // Play pop sound and increase score
-        pop.play();
-        score += 1;
-        break;
-      }
-    }
-  }
-
-  // Spawn new enemies occasionally
-  if (frameCount % 60 === 0) {
-    let enemySize = random(40, 80);
-    enemies.push({
-      x: random(width - enemySize),
-      y: -enemySize,
-      size: enemySize,
-      speed: random(2, 5),
-    });
-  }
-
-  // Draw player (mouse cursor)
-  fill(255, 0, 0);
-  noStroke();
-  ellipse(mouseX, height - 50, 50, 50);
+  m = createVector(mouseX, mouseY);
+  background(50);
+  homelander.drawHomey();
+  laser.display();
+  gameControl.display();
 }
 
 function mousePressed() {
-  // Fire a beam when mouse is pressed
-  beams.push({ x: mouseX, y: height - 50 });
-  beamsound.play();
+  mouseClick = true;
 }
+
+function mouseReleased() {
+  mouseClick = false;
+}
+
+function keyPressed() {
+  if (key === 'r') {
+    gameControl.resetGame();
+  }
+}
+
+// Billy class for managing falling heads
+class Billy {
+  constructor(x, y, speed) {
+    this.x = x;
+    this.y = y;
+    this.speed = speed;
+    this.billySize = 100; // Size of falling heads
+  }
+
+  update() {
+    this.y += this.speed; // Move the billy down
+  }
+
+  display() {
+    image(billyIMG, this.x - this.billySize / 2, this.y - this.billySize / 2, this.billySize, this.billySize);
+  }
+}
+
+class GameControl {
+  constructor() {
+    this.frameCounter = 0;
+    this.score = 0;
+    this.gameTime = 15; // Seconds per game
+    this.billySize = 100;
+    this.startTime = 0;
+    this.spawnTime = 20; // Time until a new object is spawned (lower is faster)
+    this.highScore = 0;
+  }
+
+  display() {
+    if (millis() <= 5000) { // Start of game explanation for 5 seconds
+      textAlign(CENTER, CENTER);
+      fill(255);
+      textSize(50);
+      text("CLICK AND DRAG TO POP THE FALLING HEADS", width / 2, height / 2 - 100);
+      fill(100);
+      this.resetGame();
+    }
+
+    if (millis() - this.startTime >= this.gameTime * 1000) { // End game after specified time
+      gameOver = true;
+      beamsound.stop();
+    }
+
+    if (!gameOver) {
+      if (this.frameCounter % this.spawnTime === 0) {
+        billys.push(new Billy(random(0, width), -this.billySize, random(2, 7.5)));
+      }
+
+      this.frameCounter++;
+
+      for (let i = billys.length - 1; i >= 0; i--) {
+        let b = billys[i];
+        b.update();
+        b.display();
+
+        if (mouseClick) {
+          if (dist(m.x + 50, m.y, b.x, b.y) < 60 || dist(m.x - 50, m.y, b.x, b.y) < 60) {
+            billys.splice(i, 1); // Remove billy if hit
+            this.score++;
+            pop.play();
+          }
+        }
+      }
+
+      let timeLeft = this.gameTime - Math.floor((millis() - this.startTime) / 1000);
+
+      fill(255);
+      textSize(32);
+      textAlign(LEFT, TOP);
+      text(`Time: ${timeLeft}`, 10, 10);
+      text(`Score: ${this.score}`, width - 150, 10);
+    } else {
+      textAlign(CENTER, CENTER);
+      fill(255, 0, 0);
+      textSize(64);
+      text("Game Over", width / 2, height / 2);
+      fill(255);
+      textSize(40);
+      text(`Final Score: ${this.score}`, width / 2, height / 2 + 50);
+      fill(200);
+      textSize(30);
+      text(`High Score: ${this.highScore}`, width / 2, height / 2 + 90);
+      fill(100);
+      textSize(20);
+      text("Press [R] to retry", width / 2, height / 2 + 120);
+    }
+
+    if (gameOver && this.score > this.highScore) {
+      this.highScore = this.score;
+    }
+  }
+
+  resetGame() {
+    this.score = 0;
+    billys = [];
+    this.startTime = millis();
+    gameOver = false;
+  }
+}
+
+class Homelander {
+  drawHomey() {
+    // (Simplified, include drawing logic here)
+  }
+}
+
+class Laser {
+  constructor() {
+    this.laserOffset = 50;
+  }
+
+  display() {
+    if (!gameOver) {
+      beamsound.stop();
+      if (mouseClick) {
+        beamsound.play();
+        let laserLX = m.x - this.laserOffset;
+        let laserRX = m.x + this.laserOffset;
+
+        noStroke();
+        fill('#ff0000');
+        triangle(homelanderX - 20, homelanderY - 10, laserLX, m.y, homelanderX - 20, homelanderY + 10);
+        triangle(homelanderX + 20, homelanderY - 10, laserRX, m.y, homelanderX + 20, homelanderY + 10);
+        ellipse(laserLX, m.y, 20, 20);
+        ellipse(laserRX, m.y, 20, 20);
+      }
+    }
+  }
+}
+
 
 
         
