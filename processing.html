@@ -62,6 +62,14 @@
             padding: 2rem;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
+        #processing-canvas {
+            margin: 2rem auto;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            display: block;
+            max-width: 100%;
+            height: auto;
+        }
         footer {
             background-color: #333;
             color: white;
@@ -70,7 +78,16 @@
             margin-top: 2rem;
             border-radius: 20px 20px 0 0;
         }
+        @media (max-width: 600px) {
+            header h1 {
+                font-size: 2rem;
+            }
+            header p, p {
+                font-size: 1rem;
+            }
+        }
     </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/processing.js/1.4.8/processing.min.js"></script>
 </head>
 <body>
     <header>
@@ -87,19 +104,40 @@
     <section>
         <h2 id="laser-game">Project 1: Laser Game</h2>
         <div class="project-container">
-            <p>The Laser Game is an interactive coding project built using Processing. It involves designing and programming a game where players must hit targets using simulated laser beams. The game showcases logic programming, graphics manipulation, and user interaction within the Processing environment.</p>
-            <p>Features:</p>
+            <p>This game is a coding project built using Processing.</p>
+           
+            <p>Instructions:</p>
             <ul>
-                <li>Real-time laser movement and target detection</li>
-                <li>Dynamic score tracking</li>
-                <li>Visually engaging animations and effects</li>
+                <li>Click and drag to activate the laser beams.</li>
+                <li>Hit the falling heads to score points.</li>
+                <li>Press <strong>R</strong> to restart the game.</li>
             </ul>
-            <p>Code and demo coming soon!</p>
+            <p>Try the demo below!</p>
         </div>
+        <canvas id="processing-canvas" width="800" height="500" aria-label="Interactive laser game demo"></canvas>
     </section>
 
     <footer>
         <p>&copy; 2025 Adi's Portfolio. No rights reserved.</p>
     </footer>
+
+    <script type="application/processing" id="laser-game-code">
+        PImage billyIMG;
+        void setup() {
+            size(800, 500);
+            billyIMG = loadImage("billy.png"); // Ensure billy.png is in the same folder
+        }
+
+        void draw() {
+            background(200);
+            image(billyIMG, width / 2 - 50, height / 2 - 50, 100, 100);
+        }
+    </script>
+
+    <script>
+        const canvas = document.getElementById("processing-canvas");
+        const code = document.getElementById("laser-game-code").textContent;
+        new Processing(canvas, code);
+    </script>
 </body>
 </html>
