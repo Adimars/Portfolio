@@ -87,7 +87,7 @@
             }
         }
     </style>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/processing.js/1.6.6/processing.js"></script>
 </head>
 <body>
     <header>
@@ -97,21 +97,21 @@
 
     <nav>
         <a href="index.html">Home</a>
-        <a href="#laser-game">Laser Game</a>
+        <a href="#pac-game">Pac Game</a>
         <a href="/Portfolio/index.html#contact">Contact</a>
     </nav>
 
     <section>
-        <h2 id="laser-game">Project 1: Laser Game</h2>
+        <h2 id="pac-game">Project 1: Pac Game</h2>
         <div class="project-container">
-            <p>This game is a coding project built using p5.js.</p>
-           
+            <p>This game is a coding project built using Processing.js.</p>
+<!--            
             <p>Instructions:</p>
             <ul>
                 <li>Click and drag to activate the laser beams.</li>
                 <li>Hit the falling heads to score points.</li>
                 <li>Press <strong>R</strong> to restart the game.</li>
-            </ul>
+            </ul> -->
             <p>Try the demo below!</p>
         </div>
         <div id="p5-canvas"></div>
@@ -121,189 +121,168 @@
         <p>&copy; 2025 Adi's Portfolio. No rights reserved.</p>
     </footer>
 
-    <script>
+    <script>float xx, yy, rot;
+boolean leftPressed, rightPressed;
+boolean gameOver = false;
+PVector [] food = {new PVector(750, 450), new PVector(400, 450), new PVector(1100, 450)};
+int score, start, diff,highScore;
 
-let billys = [];
-let gameOver = false;
-let billyIMG;
-let homelanderX = 500;
-let homelanderY = 400;
-let m;
-let mouseClick = false;
 
-let beamsound;
-let pop;
-let homelander;
-let laser;
-let gameControl;
-
-function preload() {
-  beamsound = loadSound("laser.wav");
-  pop = loadSound("pop.wav");
-  billyIMG = loadImage("billy.png");
+void setup() {
+  size(1500, 900);
+  xx= width/2;
+  yy= height/2;
 }
 
-function setup() {
-  createCanvas(1500, 830); // Screen size
-  homelander = new Homelander();
-  laser = new Laser();
-  gameControl = new GameControl();
+void draw() {
+  background(0);
+
+  textSize(50);
+  fill (200,150,0, 255-start);
+   text("USE LEFT AND RIGHT ARROWS", 400, 200);
+   fill (200, 255-start);
+  text("TYPE A NUMBER or CLICK DIFFICULTY", 350, 360);
+  fill (140, 255-start);
+  text("EASY(1)          MEDIUM(2)          HARD(3)", 350, 450);
+
+
+if (diff==0&& mousePressed){
+if (dist (mouseX,mouseY,400,450)<=100){diff = 1;}
+
+if (dist (mouseX,mouseY,750,450)<=100){diff = 2;}
+
+if (dist (mouseX,mouseY,1030,450)<=80){diff = 3;}
 }
 
-function draw() {
-  m = createVector(mouseX, mouseY);
-  background(50);
-  homelander.drawHomey();
-  laser.display();
-  gameControl.display();
-}
 
-function mousePressed() {
-  mouseClick = true;
-}
-
-function mouseReleased() {
-  mouseClick = false;
-}
-
-function keyPressed() {
-  if (key === 'r') {
-    gameControl.resetGame();
-  }
-}
-
-// Billy class for managing falling heads
-class Billy {
-  constructor(x, y, speed) {
-    this.x = x;
-    this.y = y;
-    this.speed = speed;
-    this.billySize = 100; // Size of falling heads
-  }
-
-  update() {
-    this.y += this.speed; // Move the billy down
-  }
-
-  display() {
-    image(billyIMG, this.x - this.billySize / 2, this.y - this.billySize / 2, this.billySize, this.billySize);
-  }
-}
-
-class GameControl {
-  constructor() {
-    this.frameCounter = 0;
-    this.score = 0;
-    this.gameTime = 15; // Seconds per game
-    this.billySize = 100;
-    this.startTime = 0;
-    this.spawnTime = 20; // Time until a new object is spawned (lower is faster)
-    this.highScore = 0;
-  }
-
-  display() {
-    if (millis() <= 5000) { // Start of game explanation for 5 seconds
-      textAlign(CENTER, CENTER);
-      fill(255);
-      textSize(50);
-      text("CLICK AND DRAG TO POP THE FALLING HEADS", width / 2, height / 2 - 100);
-      fill(100);
-      this.resetGame();
+  if (keyPressed&&diff==0) {
+    if (key == '1') {
+      diff = 1;
     }
-
-    if (millis() - this.startTime >= this.gameTime * 1000) { // End game after specified time
-      gameOver = true;
-      beamsound.stop();
+    if (key == '2') {
+      diff = 2;
     }
-
-    if (!gameOver) {
-      if (this.frameCounter % this.spawnTime === 0) {
-        billys.push(new Billy(random(0, width), -this.billySize, random(2, 7.5)));
-      }
-
-      this.frameCounter++;
-
-      for (let i = billys.length - 1; i >= 0; i--) {
-        let b = billys[i];
-        b.update();
-        b.display();
-
-        if (mouseClick) {
-          if (dist(m.x + 50, m.y, b.x, b.y) < 60 || dist(m.x - 50, m.y, b.x, b.y) < 60) {
-            billys.splice(i, 1); // Remove billy if hit
-            this.score++;
-            pop.play();
-          }
-        }
-      }
-
-      let timeLeft = this.gameTime - Math.floor((millis() - this.startTime) / 1000);
-
-      fill(255);
-      textSize(32);
-      textAlign(LEFT, TOP);
-      text(`Time: ${timeLeft}`, 10, 10);
-      text(`Score: ${this.score}`, width - 150, 10);
-    } else {
-      textAlign(CENTER, CENTER);
-      fill(255, 0, 0);
-      textSize(64);
-      text("Game Over", width / 2, height / 2);
-      fill(255);
-      textSize(40);
-      text(`Final Score: ${this.score}`, width / 2, height / 2 + 50);
-      fill(200);
-      textSize(30);
-      text(`High Score: ${this.highScore}`, width / 2, height / 2 + 90);
-      fill(100);
-      textSize(20);
-      text("Press [R] to retry", width / 2, height / 2 + 120);
-    }
-
-    if (gameOver && this.score > this.highScore) {
-      this.highScore = this.score;
+    if (key == '3') {
+      diff = 3;
     }
   }
 
-  resetGame() {
-    this.score = 0;
-    billys = [];
-    this.startTime = millis();
+  fill (200);
+  textSize(30);
+  text("SCORE: "+score, 10, 25);
+
+  if (start<255&diff!=0) {
+    start+=15;
+  }
+
+  if (!gameOver&&start>=255) {
+
+    pushMatrix();
+    translate(xx, yy);
+    rotate(rot);
+    fill(200, 200, 0);
+    arc(0, 0, 50, 50, 0.5, TWO_PI - 0.5); 
+    popMatrix();
+
+    fill(255);
+    ellipse(food[0].x, food[0].y, 20, 20);
+    ellipse(food[1].x, food[1].y, 25, 15);
+    ellipse(food[2].x, food[2].y, 15, 25);
+
+
+    if (leftPressed) {
+      rot -= 0.1;
+    }
+    if (rightPressed) {
+      rot += 0.1;
+    }
+    
+     if (leftPressed&&diff==2) {
+      rot -= 0.05;
+    }
+    if (rightPressed&&diff==2) {
+      rot += 0.05;
+    }
+    
+        if (leftPressed&&diff==3) {
+      rot -= 0.1;
+    }
+    if (rightPressed&&diff==3) {
+      rot += 0.1;
+    }
+
+
+
+      xx += (diff*5)*cos(rot);
+      yy += (diff*5)*sin(rot);
+   
+
+
+
+
+    if (dist(xx, yy, food[0].x, food[0].y)<=35) {
+      food[0] = new PVector (int ((random(50, 1450))), int ((random(50, 850))));
+      score++;
+    }
+
+    if (dist(xx, yy, food[1].x, food[1].y)<=35) {
+      food[1] = new PVector (int ((random(50, 1450))), int ((random(50, 850))));
+      score++;
+    }
+
+    if (dist(xx, yy, food[2].x, food[2].y)<=35) {
+      food[2] = new PVector (int ((random(50, 1450))), int ((random(50, 850))));
+      score++;
+    }
+  } 
+  
+  
+  if (gameOver) {
+    textSize(60);
+    fill (200, 0, 0);
+    text("GAME OVER", 620, 450);
+       textSize(30);
+       fill (200);
+    text("PRESS [SPACE] TO RESTART", 570, 500);
+  }
+
+
+  if (xx<=1500&&xx>=0&&yy>=0&&yy<900) {
     gameOver = false;
-  }
-}
-
-class Homelander {
-  drawHomey() {
-    // (Simplified, include drawing logic here)
-  }
-}
-
-class Laser {
-  constructor() {
-    this.laserOffset = 50;
-  }
-
-  display() {
-    if (!gameOver) {
-      beamsound.stop();
-      if (mouseClick) {
-        beamsound.play();
-        let laserLX = m.x - this.laserOffset;
-        let laserRX = m.x + this.laserOffset;
-
-        noStroke();
-        fill('#ff0000');
-        triangle(homelanderX - 20, homelanderY - 10, laserLX, m.y, homelanderX - 20, homelanderY + 10);
-        triangle(homelanderX + 20, homelanderY - 10, laserRX, m.y, homelanderX + 20, homelanderY + 10);
-        ellipse(laserLX, m.y, 20, 20);
-        ellipse(laserRX, m.y, 20, 20);
-      }
-    }
+  } else {
+    gameOver = true;
   }
 }
 
 
+
+
+void keyPressed() {
+
+  if (keyCode == LEFT) {
+    leftPressed = true;
+  }
+  if (keyCode == RIGHT) {
+    rightPressed = true;
+  }
+  if (key == ' ') {
+    gameOver = false;
+    xx= width/2;
+    yy= height/2;
+    score = 0;
+    start = 0;
+    diff = 0;
+  }
+}
+
+void keyReleased() {
+  if (keyCode == LEFT) {
+    leftPressed = false;
+  }
+  if (keyCode == RIGHT) {
+    rightPressed = false;
+  }
+}
 
         
     </script>
