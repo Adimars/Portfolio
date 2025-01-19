@@ -88,14 +88,19 @@
     <nav>
         <a href="index.html">Home</a>
         <a href="#laser-game">Laser Game</a>
-        <a href="#contact">Contact</a>
+        <a href="/Portfolio/index.html#contact">Contact</a>
     </nav>
 
     <section>
         <h2 id="laser-game">Project 1: Laser Game</h2>
         <div class="project-container">
             <p>This game is an interactive coding project built using Processing. </p>
-
+  <p>Instructions:</p>
+            <ul>
+                <li>Click and drag to activate the laser beams.</li>
+                <li>Hit the falling heads to score points.</li>
+                <li>Press <strong>R</strong> to restart the game.</li>
+            </ul>
             <p>Try the demo below!</p>
         </div>
         <canvas id="processing-canvas" width="500" height="500"></canvas>
@@ -107,7 +112,7 @@
 
     <script type="application/processing" id="laser-game-code">
 
-import processing.sound.*;
+//import processing.sound.*;
 
 ArrayList<billy> billys = new ArrayList<billy>();
 boolean gameOver = false;
@@ -117,8 +122,8 @@ float homelanderY = 400;
 PVector m;
 boolean mouseClick = false;
 
-SoundFile beamsound;
-SoundFile pop;
+//SoundFile beamsound;
+//SoundFile pop;
 Homelander homelander;
 Laser laser;
 GameControl gameControl;
@@ -129,8 +134,8 @@ void setup() {
   homelander = new Homelander();
   laser = new Laser();
   gameControl = new GameControl();
-  beamsound = new SoundFile(this, "laser.wav");
-  pop = new SoundFile(this, "pop.wav");
+ // beamsound = new SoundFile(this, "laser.wav");
+ // pop = new SoundFile(this, "pop.wav");
   billyIMG = loadImage("billy.png");
 }
 
@@ -202,7 +207,7 @@ class billy {
     // ends game at after specified game time
     if (millis() - startTime >= gameTime * 1000) {
       gameOver = true;
-      beamsound.pause();
+    //  beamsound.pause();
     }
 
 
@@ -226,7 +231,7 @@ class billy {
           if ((dist(m.x+50, m.y, b.x, b.y ) < 60)||(dist(m.x-50, m.y, b.x, b.y)<60)) { // detects if laser circs hit the image
             billys.remove(i);  //if touched deletes the object
             score++; // adds 1 to the score
-            pop.play(1, -1, 0.2); //  play pop sound
+          //  pop.play(1, -1, 0.2); //  play pop sound
           }
         }
       }
@@ -369,9 +374,9 @@ class billy {
   void display() {
 
     if (!gameOver) {
-      beamsound.pause();
+    //  beamsound.pause();
       if (mouseClick) {
-        beamsound.play(); // plays laserbeam sound when laser is active
+   //     beamsound.play(); // plays laserbeam sound when laser is active
 
         float laserLX = m.x - laserOffset; // L laser
         float laserRX = m.x + laserOffset; // R laser
