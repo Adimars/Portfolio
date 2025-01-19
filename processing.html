@@ -62,7 +62,7 @@
             padding: 2rem;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
-        #processing-canvas {
+        #p5-canvas {
             margin: 2rem auto;
             border: 1px solid #ddd;
             border-radius: 10px;
@@ -87,7 +87,7 @@
             }
         }
     </style>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/processing.js/1.4.8/processing.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.min.js"></script>
 </head>
 <body>
     <header>
@@ -104,7 +104,7 @@
     <section>
         <h2 id="laser-game">Project 1: Laser Game</h2>
         <div class="project-container">
-            <p>This game is a coding project built using Processing.</p>
+            <p>This game is a coding project built using p5.js.</p>
            
             <p>Instructions:</p>
             <ul>
@@ -114,30 +114,117 @@
             </ul>
             <p>Try the demo below!</p>
         </div>
-        <canvas id="processing-canvas" width="800" height="500" aria-label="Interactive laser game demo"></canvas>
+        <div id="p5-canvas"></div>
     </section>
 
     <footer>
         <p>&copy; 2025 Adi's Portfolio. No rights reserved.</p>
     </footer>
 
-    <script type="application/processing" id="laser-game-code">
-        PImage billyIMG;
-        void setup() {
-            size(800, 500);
-            billyIMG = loadImage("billy.png"); // Ensure billy.png is in the same folder
-        }
-
-        void draw() {
-            background(200,200,0);
-            image(billyIMG, width / 2 - 50, height / 2 - 50, 100, 100);
-        }
-    </script>
-
     <script>
-        const canvas = document.getElementById("processing-canvas");
-        const code = document.getElementById("laser-game-code").textContent;
-        new Processing(canvas, code);
+
+
+
+
+// Variables for game elements
+let beams = [];
+let enemies = [];
+let billy;
+let beamsound;
+let pop;
+let score = 0;
+let beamSpeed = 15;
+
+function preload() {
+  // Load assets
+  billy = loadImage("billy.png");
+  beamsound = loadSound("laser.wav");
+  pop = loadSound("pop.wav");
+}
+
+function setup() {
+  createCanvas(1500, 900);
+}
+
+function draw() {
+  background(0);
+
+  // Draw score
+  textSize(40);
+  fill(255);
+  textAlign(RIGHT, TOP);
+  text("Score: " + score, width - 20, 20);
+
+  // Handle beams
+  for (let i = beams.length - 1; i >= 0; i--) {
+    let beam = beams[i];
+    beam.y -= beamSpeed;
+
+    // Draw beam
+    stroke(0, 255, 0);
+    strokeWeight(5);
+    line(beam.x, beam.y, beam.x, beam.y + 20);
+
+    // Remove beams that go out of bounds
+    if (beam.y < 0) {
+      beams.splice(i, 1);
+    }
+  }
+
+  // Handle enemies
+  for (let i = enemies.length - 1; i >= 0; i--) {
+    let enemy = enemies[i];
+    enemy.y += enemy.speed;
+
+    // Draw enemy
+    image(billy, enemy.x, enemy.y, enemy.size, enemy.size);
+
+    // Remove enemies that go out of bounds
+    if (enemy.y > height) {
+      enemies.splice(i, 1);
+    }
+
+    // Check for collisions with beams
+    for (let j = beams.length - 1; j >= 0; j--) {
+      let beam = beams[j];
+      if (dist(beam.x, beam.y, enemy.x + enemy.size / 2, enemy.y + enemy.size / 2) < enemy.size / 2) {
+        // Remove enemy and beam
+        enemies.splice(i, 1);
+        beams.splice(j, 1);
+
+        // Play pop sound and increase score
+        pop.play();
+        score += 1;
+        break;
+      }
+    }
+  }
+
+  // Spawn new enemies occasionally
+  if (frameCount % 60 === 0) {
+    let enemySize = random(40, 80);
+    enemies.push({
+      x: random(width - enemySize),
+      y: -enemySize,
+      size: enemySize,
+      speed: random(2, 5),
+    });
+  }
+
+  // Draw player (mouse cursor)
+  fill(255, 0, 0);
+  noStroke();
+  ellipse(mouseX, height - 50, 50, 50);
+}
+
+function mousePressed() {
+  // Fire a beam when mouse is pressed
+  beams.push({ x: mouseX, y: height - 50 });
+  beamsound.play();
+}
+
+
+        
     </script>
 </body>
 </html>
