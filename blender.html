@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Processing Projects - Adi's Portfolio</title>
+    <title>Blender Projects - Adi's Portfolio</title>
     <style>
         body {
             font-family: 'Arial', sans-serif;
@@ -18,13 +18,6 @@
             padding: 2rem;
             text-align: center;
             border-radius: 0 0 20px 20px;
-        }
-        header h1 {
-            margin: 0;
-            font-size: 2.5rem;
-        }
-        header p {
-            font-size: 1.2rem;
         }
         nav {
             margin: 1rem 0;
@@ -45,28 +38,31 @@
             padding: 2rem;
             text-align: center;
         }
-        h2 {
+        h2, h3 {
             font-size: 2rem;
             color: #4a90e2;
-            margin-bottom: 1rem;
         }
         p {
             font-size: 1.1rem;
             line-height: 1.6;
         }
-        .project-container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 20px;
-            padding: 2rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        .project-gallery {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 2rem;
         }
-        #processing-canvas {
-            margin: 2rem auto;
-            border: 1px solid #ddd;
+        .project {
+            background: #fff;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            text-align: center;
+        }
+        .project img {
+            max-width: 100%;
             border-radius: 10px;
-            display: block;
         }
         footer {
             background-color: #333;
@@ -77,347 +73,38 @@
             border-radius: 20px 20px 0 0;
         }
     </style>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/processing.js/1.4.8/processing.min.js"></script>
 </head>
 <body>
     <header>
-        <h1>Processing Projects</h1>
-        <p>Explore my creative coding projects built with Processing.</p>
+        <h1>Blender Projects</h1>
+        <p>Here are some of my 3D modeling projects made using Blender.</p>
     </header>
 
     <nav>
-        <a href="index.html">Home</a>
-        <a href="#laser-game">Laser Game</a>
-        <a href="/Portfolio/index.html#contact">Contact</a>
+        <a href="#about">About</a>
+        <a href="#projects">Projects</a>
+        <a href="#contact">Contact</a>
     </nav>
 
-    <section>
-        <h2 id="laser-game">Project 1: Laser Game</h2>
-        <div class="project-container">
-            <p>This game is an interactive coding project built using Processing. </p>
-  <p>Instructions:</p>
-            <ul>
-                <li>Click and drag to activate the laser beams.</li>
-                <li>Hit the falling heads to score points.</li>
-                <li>Press <strong>R</strong> to restart the game.</li>
-            </ul>
-            <p>Try the demo below!</p>
+    <section id="projects">
+        <h2>Blender Projects</h2>
+
+        <div class="project-gallery">
+            <div class="project">
+                <h3>Project 1: Minecraft House</h3>
+                <p>A 3D model of a Minecraft-inspired house created in Blender.</p>
+                <img src="minecraft_house.jpg" alt="Minecraft House">
+            </div>
+            <div class="project">
+                <h3>Project 2: Japanese House</h3>
+                <p>A traditional Japanese-style house designed in Blender.</p>
+                <img src="japanese_house.jpg" alt="Japanese House">
+            </div>
         </div>
-        <canvas id="processing-canvas" width="500" height="500"></canvas>
     </section>
 
     <footer>
         <p>&copy; 2025 Adi's Portfolio. No rights reserved.</p>
     </footer>
-
-    <script type="application/processing" id="laser-game-code">
-
-//import processing.sound.*;
-
-ArrayList<billy> billys = new ArrayList<billy>();
-boolean gameOver = false;
-PImage billyIMG;
-float homelanderX = 500;
-float homelanderY = 400;
-PVector m;
-boolean mouseClick = false;
-
-//SoundFile beamsound;
-//SoundFile pop;
-Homelander homelander;
-Laser laser;
-GameControl gameControl;
-
-
-void setup() {
-  size(1500, 830); //screen size
-  homelander = new Homelander();
-  laser = new Laser();
-  gameControl = new GameControl();
- // beamsound = new SoundFile(this, "laser.wav");
- // pop = new SoundFile(this, "pop.wav");
-  billyIMG = loadImage("billy.png");
-}
-
-void draw() {
-  m = new PVector(mouseX, mouseY);
-  background(50);
-  homelander.drawHomey();
-  laser.display();
-  gameControl.display();
-}
-
-void mousePressed() {
-  mouseClick = true;
-}
-
-void mouseReleased() {
-  mouseClick = false;
-}
-
-void keyPressed () {
-  if ( key =='r' ) {
-    gameControl.resetGame();
-  }
-}
-
-        
-// billy class for managing speed of falling billys
-class billy {
-  float x, y;
-  float speed;
-  int billySize = 100;  //size of falling heads
-
-  billy(float x, float y, float speed) {
-    this.x = x;
-    this.y = y;
-    this.speed = speed;
-  }
-
-  void update() {
-    y += speed;  // Move the billy down
-  }
-
-  void display() {
-    image(billyIMG, x - billySize / 2, y - billySize / 2, billySize, billySize);
-  }
-}
-
-        class GameControl {
-  int frameCounter = 0;
-  int score = 0;
-  int gameTime = 15; //seconds per game
-  int billySize = 100;  //size of falling heads
-  int startTime = 0;
-  int spawnTime = 20;    //time til a new object is spawned (less is faster)
-  int HighScore = 0;
-
-
-  void display() {
-    //start of game explanation for 5 secs
-    if (millis() <= 5 * 1000) {
-      textAlign(CENTER, CENTER);
-      fill(255);
-      textSize(50);
-      text("CLICK AND DRAG TO POP THE FALLING HEADS", width / 2, height / 2-100);
-      fill(100);
-      resetGame();
-    }
-
-    // ends game at after specified game time
-    if (millis() - startTime >= gameTime * 1000) {
-      gameOver = true;
-    //  beamsound.pause();
-    }
-
-
-    if (!gameOver) {
- 
-      if (frameCounter % spawnTime == 0) { // framerate(60)/
-        billys.add(new billy(random(0, 1500), -billySize, random(2, 7.5)));  // adds new billy x y speed
-      }
-
-      frameCounter+=1;
-
-      // Update and draw all the billys
-      for (int i = billys.size() - 1; i >= 0; i--) {
-        billy b = billys.get(i);
-        b.update();
-        b.display();
-
-
-        if (mouseClick) {
-          // Check for collision with the red circle and remove if colliding
-          if ((dist(m.x+50, m.y, b.x, b.y ) < 60)||(dist(m.x-50, m.y, b.x, b.y)<60)) { // detects if laser circs hit the image
-            billys.remove(i);  //if touched deletes the object
-            score++; // adds 1 to the score
-          //  pop.play(1, -1, 0.2); //  play pop sound
-          }
-        }
-      }
-      int timeLeft = gameTime - (millis() - startTime) / 1000;
-
-      fill(255);
-      textSize(32);
-      textAlign(LEFT, TOP);
-      text("Time: " + timeLeft, 10, 10);
-      text("Score: " + score, width - 120, 10);  // Display the score in the top right corner
-    } else {
-      textAlign(CENTER, CENTER);
-      //text that shows when game is over
-      fill(255, 0, 0);
-      textSize(64);
-      text("Game Over", width / 2, height / 2);
-      fill(255);
-      textSize(40);
-      text("Final Score: " + score, width / 2, height / 2 + 50);
-      fill(200);
-      textSize(30);
-      text("High Score: " + HighScore, width / 2, height / 2 + 90);
-      fill(100);
-      textSize(20);
-      text("Press [R] to retry", width / 2, height / 2 + 120);
-    }
-
-    //set a high score
-    if (gameOver && score > HighScore) {
-      HighScore = score;
-    }
-
-    // allows u to press r to reset
-  }
-
-
-  void resetGame() {
-    score = 0;
-    billys.clear();
-    startTime = millis();
-    gameOver = false;
-  }
-}
-
-        class Homelander {
-
-  void drawHomey() {
-    // ears
-    fill(#dfc4a8);
-    stroke(#dfc4a8);
-    strokeWeight(4);
-    strokeJoin(ROUND);
-    circle(homelanderX + 55, homelanderY + 10, 40);
-    circle(homelanderX - 55, homelanderY + 10, 40);
-    noStroke();
-    fill(#cfa77d);
-    circle(homelanderX + 55, homelanderY + 10, 35);
-    circle(homelanderX - 55, homelanderY + 10, 35);
-
-    // face
-    noStroke();
-    fill(#ffd7ae);
-    circle(homelanderX, homelanderY + 15, 130);
-    circle(homelanderX, homelanderY + 20, 120);
-    circle(homelanderX, homelanderY + 50, 100);
-    circle(homelanderX, homelanderY + 60, 90);
-    // hair
-    fill(#644010); //  hair bottom color
-    arc(homelanderX, homelanderY - 40, 100, 30, 0, 3.3);
-    fill(#D6D17B); //  hair top color
-    arc(homelanderX, homelanderY - 45, 100, 30, 0, 3.3);
-    arc(homelanderX, homelanderY - 50, 100, 30, 0, 3.3);
-    arc(homelanderX, homelanderY - 55, 100, 30, 0, 3.3);
-    arc(homelanderX, homelanderY - 60, 100, 30, 0, 3.3);
-    // mouth
-    fill(0, 0, 0);
-    arc(homelanderX, homelanderY + 56, 60, 60, 0, 3.1);
-    // Teeth
-    fill(#ffffb3);
-    arc(homelanderX, homelanderY + 56, 60, 20, 0, 3.3);
-    stroke(#000000);
-    line(homelanderX, homelanderY + 57, homelanderX, homelanderY + 70);
-    stroke(#995c00);
-    line(homelanderX + 20, homelanderY + 57, homelanderX + 20, homelanderY + 62);
-    line(homelanderX + 18, homelanderY + 57, homelanderX + 18, homelanderY + 63);
-    // eyes outer
-    noStroke();
-    fill(#ffffff);
-    ellipse(homelanderX + 20, homelanderY, 34, 28);
-    ellipse(homelanderX - 20, homelanderY, 34, 28);
-    // eyes
-    fill(#880000);
-    ellipse(homelanderX + 20, homelanderY, 20, 22);
-    ellipse(homelanderX - 20, homelanderY, 20, 22);
-    // nose
-    fill(#ffd7ae);
-    stroke(#dfc4a8);
-    strokeWeight(4);
-    strokeJoin(ROUND);
-    triangle(homelanderX - 10, homelanderY + 45, homelanderX, homelanderY + 20, homelanderX + 10, homelanderY + 45);
-    noStroke();
-    // body (red shirt)
-    fill(#A03F41);
-    rect(homelanderX - 60, homelanderY + 120, 120, 120, 20, 20, 0, 0);
-    // neck
-    fill(#F0C9A2);
-    rect(homelanderX - 20, homelanderY + 100, 40, 20);
-
-    // jean top
-    fill(#0000FF);
-    rect(homelanderX - 60, homelanderY + 240, 120, 50, 0, 0, 10, 10);
-    // arms
-    stroke(#dfc4a8);
-    fill(#dfc4a8);
-    strokeWeight(10);
-    line(homelanderX - 60, homelanderY + 150, homelanderX - 120, homelanderY + 180);
-    line(homelanderX + 60, homelanderY + 150, homelanderX + 120, homelanderY + 180);
-    // hand dots
-    noStroke();
-    fill(#dfc4a8);
-    ellipse(homelanderX - 120, homelanderY + 180, 20, 20);
-    ellipse(homelanderX + 120, homelanderY + 180, 20, 20);
-    // jeans bottom
-    fill(#0000FF);
-    rect(homelanderX - 50, homelanderY + 250, 30, 180);
-    rect(homelanderX + 20, homelanderY + 250, 30, 180);
-    // shoes
-    fill(#000000);
-    rect(homelanderX - 50, homelanderY + 420, 30, 10);
-    rect(homelanderX + 20, homelanderY + 420, 30, 10);
-    fill(#ffffff);
-    triangle(homelanderX - 45, homelanderY + 425, homelanderX - 35, homelanderY + 425, homelanderX - 40, homelanderY + 420);
-    triangle(homelanderX + 25, homelanderY + 425, homelanderX + 35, homelanderY + 425, homelanderX + 30, homelanderY + 420);
-  }
-}
-
-        class Laser {
-  int laserOffset = 50;
-
-  void display() {
-
-    if (!gameOver) {
-    //  beamsound.pause();
-      if (mouseClick) {
-   //     beamsound.play(); // plays laserbeam sound when laser is active
-
-        float laserLX = m.x - laserOffset; // L laser
-        float laserRX = m.x + laserOffset; // R laser
-
-
-        noStroke();
-        fill(#ff0000);
-        // lasers
-        triangle(homelanderX - 20, homelanderY - 10, laserLX, m.y, homelanderX - 20, homelanderY + 10);
-        triangle(homelanderX + 20, homelanderY - 10, laserRX, m.y, homelanderX + 20, homelanderY + 10);
-        triangle(homelanderX - 30, homelanderY, laserLX, m.y, homelanderX - 10, homelanderY);
-        triangle(homelanderX + 30, homelanderY, laserRX, m.y, homelanderX + 10, homelanderY);
-
-        // Laser circs
-        ellipse(laserLX, m.y, 20, 20);
-        ellipse(laserRX, m.y, 20, 20);
-
-        // eyes brigh red
-        fill(#ff0000);
-        ellipse(homelanderX + 20, homelanderY, 20, 22);
-        ellipse(homelanderX - 20, homelanderY, 20, 22);
-      }
-    } else {
-      if (mouseClick) {
-        // tongue (fun easter egg for when game is over)
-        fill(#885555);
-        arc(homelanderX, homelanderY + 70, 20, 60, 0, PI);
-      }
-    }
-  }
-}
-
-
-
-        
-    </script>
-
-    <script>
-        const canvas = document.getElementById("processing-canvas");
-        const code = document.getElementById("laser-game-code").textContent;
-        new Processing(canvas, code);
-    </script>
 </body>
 </html>
