@@ -549,7 +549,7 @@ background: #348cb2 url("images/bg2.jpg") top right;
 		-moz-transform: translate3d(0,0,0);
 		-webkit-transform: translate3d(0,0,0);
 		-ms-transform: translate3d(0,0,0);
-		transform: translate3d(0,0,0);
+		transform: translate(-50%, 0);
 		cursor: default;
 		display: inline-block;
 		opacity: 0;
@@ -557,7 +557,7 @@ background: #348cb2 url("images/bg2.jpg") top right;
 		text-align: center;
 		top: 10%;
 		vertical-align: middle;
-		width: 50%;
+		width: 90%;
 	}
 
 		#header h1 {
