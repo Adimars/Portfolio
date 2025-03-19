@@ -556,7 +556,7 @@ background: #348cb2 url("images/bg2.jpg") top right;
 		position: relative;
 		text-align: center;
 		top: 1em;
-		vertical-align: top;
+		vertical-align: 5em;
 		width: 90%;
 	}
 	}
