@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>OmniAccess</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg:      #0A0F1E;
+    --card:    #1C2A3A;
+    --accent:  #00C8FF;
+    --text:    #F0F4F8;
+    --muted:   #4A6080;
+    --success: #00E5A0;
+    --error:   #FF4D6D;
+    --border:  rgba(0,200,255,0.18);
+    --warn:    #FFB830;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; }
+
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.06) 2px, rgba(0,0,0,0.06) 4px);
+    pointer-events: none; z-index: 1000;
+  }
+
+  /* ── OVERLAY: T&C ── */
+  #tc-overlay {
+    position: fixed; inset: 0; z-index: 500;
+    background: rgba(5,8,18,0.97);
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  .tc-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    max-width: 680px; width: 100%;
+    padding: 36px;
+    display: flex; flex-direction: column; gap: 20px;
+    max-height: 92vh;
+  }
+  .tc-header {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 900;
+    color: var(--accent);
+    letter-spacing: 0.06em;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 14px;
+  }
+  .tc-body {
+    overflow-y: auto;
+    flex: 1;
+    font-size: 0.83rem;
+    line-height: 1.7;
+    color: #9BBAD0;
+    padding-right: 6px;
+  }
+  .tc-body::-webkit-scrollbar { width: 4px; }
+  .tc-body::-webkit-scrollbar-track { background: transparent; }
+  .tc-body::-webkit-scrollbar-thumb { background: var(--muted); border-radius: 2px; }
+  .tc-clause { margin-bottom: 14px; }
+  .tc-clause strong { color: var(--text); display: block; margin-bottom: 3px; font-size: 0.82rem; }
+  .tc-warn {
+    background: rgba(255,77,109,0.08);
+    border: 1px solid rgba(255,77,109,0.3);
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 0.8rem;
+    color: #FF9AAF;
+    line-height: 1.55;
+  }
+  .tc-actions { display: flex; gap: 12px; align-items: center; }
+  .btn-deny {
+    flex: 1;
+    background: rgba(255,77,109,0.1);
+    border: 1.5px solid rgba(255,77,109,0.4);
+    color: var(--error);
+    border-radius: 8px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    padding: 13px 10px;
+    cursor: not-allowed;
+    opacity: 0.5;
+    transition: opacity .3s;
+    text-align: center;
+  }
+  .btn-deny.unlocked { opacity: 1; cursor: pointer; }
+  .btn-deny.unlocked:hover { background: rgba(255,77,109,0.2); }
+  .btn-accept {
+    flex: 2;
+    background: var(--accent);
+    color: #0A0F1E;
+    border: none;
+    border-radius: 8px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    padding: 14px;
+    cursor: pointer;
+    transition: background .2s, box-shadow .2s;
+  }
+  .btn-accept:hover { background: #33d4ff; box-shadow: 0 0 24px rgba(0,200,255,0.35); }
+  #tc-timer {
+    font-size: 0.7rem;
+    color: var(--muted);
+    text-align: center;
+    font-family: 'Orbitron', sans-serif;
+    letter-spacing: 0.1em;
+  }
+
+  /* ── MAIN APP ── */
+  #app { display: none; }
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 22px 40px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(10,15,30,0.9);
+    position: sticky; top: 0; z-index: 100;
+    backdrop-filter: blur(10px);
+  }
+  .logo { font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: 1.5rem; letter-spacing: 0.08em; color: var(--accent); text-shadow: 0 0 24px rgba(0,200,255,0.45); }
+  .logo span { color: var(--text); }
+  .tagline { font-size: 0.72rem; color: var(--muted); letter-spacing: 0.15em; text-transform: uppercase; }
+
+  main { max-width: 860px; margin: 0 auto; padding: 44px 24px 80px; }
+  .section-label { font-family: 'Orbitron', sans-serif; font-size: 0.62rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--accent); margin-bottom: 10px; }
+  h2 { font-family: 'Orbitron', sans-serif; font-size: 1.3rem; font-weight: 700; margin-bottom: 26px; }
+
+  /* ── Login ── */
+  .login-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 30px; margin-bottom: 44px; }
+  .input-row { display: flex; gap: 12px; }
+  input[type="text"] {
+    flex: 1; background: rgba(0,0,0,0.35); border: 1px solid var(--border); border-radius: 8px;
+    color: var(--text); font-family: 'Inter', sans-serif; font-size: 1rem; padding: 13px 16px; outline: none; transition: border-color .2s;
+  }
+  input[type="text"]::placeholder { color: var(--muted); }
+  input[type="text"]:focus { border-color: var(--accent); }
+  .btn-primary { background: var(--accent); color: #0A0F1E; border: none; border-radius: 8px; font-family: 'Orbitron', sans-serif; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.1em; padding: 13px 26px; cursor: pointer; transition: background .2s; white-space: nowrap; }
+  .btn-primary:hover { background: #33d4ff; }
+
+  /* ── Plans ── */
+  .plans-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px; margin-bottom: 44px; }
+  .plan-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 26px 22px; cursor: pointer; transition: border-color .2s, transform .15s, box-shadow .2s; position: relative; overflow: hidden; }
+  .plan-card:hover { transform: translateY(-3px); box-shadow: 0 8px 28px rgba(0,0,0,0.4); }
+  .plan-card.selected { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent), 0 8px 28px rgba(0,200,255,0.12); }
+  .plan-badge { font-family: 'Orbitron', sans-serif; font-size: 0.56rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent); margin-bottom: 10px; display: block; }
+  .plan-name { font-family: 'Orbitron', sans-serif; font-size: 1.05rem; font-weight: 700; margin-bottom: 6px; }
+  .plan-price { font-size: 1.85rem; font-weight: 600; color: var(--accent); margin-bottom: 3px; }
+  .plan-price sup { font-size: 0.9rem; vertical-align: super; }
+  .plan-cadence { font-size: 0.76rem; color: var(--muted); margin-bottom: 13px; }
+  .plan-desc { font-size: 0.82rem; color: #8BA8C0; line-height: 1.55; }
+  .plan-check { position: absolute; top: 16px; right: 16px; width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--muted); display: flex; align-items: center; justify-content: center; transition: background .2s, border-color .2s; font-size: 0.65rem; color: transparent; }
+  .plan-card.selected .plan-check { background: var(--accent); border-color: var(--accent); color: #0A0F1E; }
+  .plan-note { font-size: 0.78rem; color: var(--warn); margin-top: 8px; line-height: 1.4; }
+
+  /* ── Write ── */
+  .write-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 30px; }
+  .write-summary { display: flex; gap: 28px; margin-bottom: 22px; flex-wrap: wrap; }
+  .summary-item label { display: block; font-size: 0.66rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+  .summary-item span { font-family: 'Orbitron', sans-serif; font-size: 0.9rem; }
+  .summary-item span.empty { color: var(--muted); font-style: italic; font-family: 'Inter', sans-serif; font-size: 0.85rem; }
+  .btn-write { background: transparent; color: var(--accent); border: 1.5px solid var(--accent); border-radius: 8px; font-family: 'Orbitron', sans-serif; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.1em; padding: 13px 30px; cursor: pointer; transition: background .2s, color .2s, box-shadow .2s; }
+  .btn-write:hover { background: var(--accent); color: #0A0F1E; box-shadow: 0 0 22px rgba(0,200,255,0.3); }
+  .btn-write:disabled { opacity: 0.35; cursor: not-allowed; }
+  .btn-write:disabled:hover { background: transparent; color: var(--accent); box-shadow: none; }
+  .rfid-indicator { display: flex; align-items: center; gap: 10px; margin-top: 16px; font-size: 0.78rem; color: var(--muted); }
+  .pulse-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--muted); flex-shrink: 0; }
+  .pulse-dot.active { background: var(--accent); animation: pulse 1.4s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(0,200,255,0.6); } 50% { box-shadow: 0 0 0 8px rgba(0,200,255,0); } }
+  #status-bar { margin-top: 18px; padding: 13px 16px; border-radius: 8px; font-size: 0.86rem; font-weight: 500; display: none; }
+  #status-bar.ok   { display: block; background: rgba(0,229,160,0.1);  border: 1px solid rgba(0,229,160,0.35);  color: var(--success); }
+  #status-bar.err  { display: block; background: rgba(255,77,109,0.1); border: 1px solid rgba(255,77,109,0.35); color: var(--error); }
+  #status-bar.info { display: block; background: rgba(0,200,255,0.08); border: 1px solid var(--border);          color: var(--accent); }
+
+  footer { text-align: center; padding: 28px; color: var(--muted); font-size: 0.72rem; letter-spacing: 0.08em; }
+
+  @media (max-width: 600px) {
+    header { padding: 16px 18px; }
+    .logo { font-size: 1.2rem; }
+    .input-row { flex-direction: column; }
+    .tc-box { padding: 24px; }
+  }
+
+  /* ── VOUCHER POPUP ─────────────────────────────────────────────────────── */
+  #voucher-overlay {
+    position: fixed; inset: 0; z-index: 800;
+    background: rgba(5,8,18,0.75);
+    display: none;
+    align-items: center; justify-content: center;
+    padding: 20px;
+    backdrop-filter: blur(4px);
+    animation: vFadeIn .25s ease;
+  }
+  #voucher-overlay.show { display: flex; }
+  @keyframes vFadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  .voucher-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    max-width: 420px; width: 100%;
+    overflow: hidden;
+    animation: vSlideUp .3s cubic-bezier(.22,.68,0,1.2);
+    position: relative;
+  }
+  @keyframes vSlideUp { from { transform: translateY(32px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+  .voucher-banner {
+    height: 7px;
+    background: linear-gradient(90deg, var(--accent), #0050FF);
+  }
+  .voucher-inner { padding: 28px 28px 24px; }
+
+  .voucher-eyebrow {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.58rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 10px;
+  }
+  .voucher-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.15rem;
+    font-weight: 900;
+    line-height: 1.25;
+    margin-bottom: 8px;
+  }
+  .voucher-subtitle {
+    font-size: 0.82rem;
+    color: #8BA8C0;
+    line-height: 1.5;
+    margin-bottom: 22px;
+  }
+
+  /* Dashed coupon ticket */
+  .voucher-ticket {
+    border: 2px dashed rgba(0,200,255,0.35);
+    border-radius: 10px;
+    padding: 16px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 22px;
+    background: rgba(0,200,255,0.04);
+  }
+  .voucher-code {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.25rem;
+    font-weight: 900;
+    letter-spacing: 0.12em;
+    color: var(--accent);
+  }
+  .voucher-discount {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 2rem;
+    font-weight: 900;
+    color: var(--success);
+    white-space: nowrap;
+  }
+  .voucher-discount span { font-size: 1rem; vertical-align: super; }
+
+  .voucher-expiry {
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+
+  .voucher-actions { display: flex; gap: 10px; }
+  .btn-voucher-copy {
+    flex: 1;
+    background: var(--accent);
+    color: #0A0F1E;
+    border: none;
+    border-radius: 8px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    padding: 12px;
+    cursor: pointer;
+    transition: background .2s;
+  }
+  .btn-voucher-copy:hover { background: #33d4ff; }
+  .btn-voucher-copy.copied { background: var(--success); color: #0A0F1E; }
+  .btn-voucher-dismiss {
+    flex: 1;
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid rgba(74,96,128,0.4);
+    border-radius: 8px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.78rem;
+    padding: 12px;
+    cursor: pointer;
+    transition: color .2s, border-color .2s;
+  }
+  .btn-voucher-dismiss:hover { color: var(--text); border-color: var(--muted); }
+
+  /* Small confetti dots that burst on open */
+  .confetti-dot {
+    position: absolute;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    pointer-events: none;
+    animation: confettiFall 1.1s ease forwards;
+  }
+  @keyframes confettiFall {
+    0%   { transform: translate(0,0) scale(1); opacity: 1; }
+    100% { transform: translate(var(--tx), var(--ty)) scale(.4); opacity: 0; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════ TERMS & CONDITIONS OVERLAY ══════════════════════ -->
+<div id="tc-overlay">
+  <div class="tc-box">
+    <div class="tc-header">OmniAccess — Terms &amp; Conditions</div>
+    <div class="tc-body">
+      <div class="tc-clause">
+        <strong>1. Introduction</strong>
+        Last updated: 10/06/2026.
+      </div>
+      <div class="tc-clause">
+        <strong>2. Authorized Usage</strong>
+        By agreeing you confirm that your use of OmniAccess is strictly limited to physical necessity. You agree that the service is intended for accessibility support, not for leisure or convenience.
+      </div>
+      <div class="tc-clause">
+        <strong>3. Mandatory Disclosure</strong>
+        Should your physical condition improve such that mobility assistance is no longer needed, you are obligated to notify OmniAccess via the website.
+      </div>
+      <div class="tc-clause">
+        <strong>4. Audit &amp; Oversight</strong>
+        When you cancel your subscription, you grant OmniAccess the right to conduct an investigation on your account usage. You also agree for OmniAccess to be able to check on your reported medical status during the time you were subscribed to our services.
+      </div>
+      <div class="tc-clause">
+        <strong>5. Penalties for Misuse</strong>
+        Misuse or continuous use, after gaining the ability to walk without assistance, without notifying OmniAccess will result in a fine of up to $2,000.
+      </div>
+      <div class="tc-clause">
+        <strong>6. Safety Compliance</strong>
+        Rules exist to protect our hardware assets.
+      </div>
+      <div class="tc-clause">
+        <strong>7. Liability</strong>
+        You waive all rights to privacy regarding account usage.
+      </div>
+      <div class="tc-clause">
+        <strong>8. Binding Contract</strong>
+        This agreement is irrevocable upon registration.
+      </div>
+      <div class="tc-warn">
+        ⚠ Please read all terms carefully. You must wait 10 seconds before you may decline.
+      </div>
+    </div>
+    <div id="tc-timer">Please wait — DO NOT ACCEPT unlocks in <span id="countdown">10</span>s</div>
+    <div class="tc-actions">
+      <div class="btn-deny" id="denyBtn" onclick="denyTC()">DO NOT ACCEPT</div>
+      <button class="btn-accept" onclick="acceptTC()">ACCEPT</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════ MAIN APP ════════════════════════════════ -->
+<div id="app">
+  <header>
+    <div>
+      <div class="logo">Omni<span>Access</span></div>
+      <div class="tagline">Accessible Solution Management</div>
+    </div>
+  </header>
+
+  <main>
+    <!-- STEP 1: NAME -->
+    <div class="login-card">
+      <div class="section-label">Step 1</div>
+      <h2>Identify Yourself</h2>
+      <div class="input-row">
+        <input type="text" id="nameInput" placeholder="Enter your full name…" maxlength="48" autocomplete="off"/>
+        <button class="btn-primary" onclick="setName()">Confirm</button>
+      </div>
+    </div>
+
+    <!-- STEP 2: PLAN -->
+    <div class="section-label">Step 2</div>
+    <h2>Choose a Subscription</h2>
+    <div class="plans-grid">
+
+      <div class="plan-card" id="plan-none" onclick="selectPlan('None', this)">
+        <div class="plan-check">✓</div>
+        <span class="plan-badge">No commitment</span>
+        <div class="plan-name">No Subscription</div>
+        <div class="plan-price" style="font-size:1.3rem; padding-top:4px;">Pay as you go</div>
+        <div class="plan-cadence">&nbsp;</div>
+        <div class="plan-desc">No active subscription. Removes any existing plan from your card.</div>
+        <div class="plan-note">Without a subscription, a bank card payment of <strong>$5 per use</strong> will be required at each ramp or elevator.</div>
+      </div>
+
+      <div class="plan-card" id="plan-one-building" onclick="selectPlan('One Building', this)">
+        <div class="plan-check">✓</div>
+        <span class="plan-badge">Single location</span>
+        <div class="plan-name">One Building</div>
+        <div class="plan-price"><sup>$</sup>20</div>
+        <div class="plan-cadence">per month</div>
+        <div class="plan-desc">Unlimited access to all ramps and elevators within one registered building.</div>
+      </div>
+
+      <div class="plan-card" id="plan-anywhere" onclick="selectPlan('Anywhere', this)">
+        <div class="plan-check">✓</div>
+        <span class="plan-badge">Best value</span>
+        <div class="plan-name">Anywhere</div>
+        <div class="plan-price"><sup>$</sup>50</div>
+        <div class="plan-cadence">per month</div>
+        <div class="plan-desc">Unlimited access across every OmniAccess-enabled building in the network.</div>
+      </div>
+
+    </div>
+
+    <!-- STEP 3: WRITE -->
+    <div class="write-card">
+      <div class="section-label">Step 3</div>
+      <h2>Write to Access Card</h2>
+      <div class="write-summary">
+        <div class="summary-item">
+          <label>Name</label>
+          <span id="display-name" class="empty">Not set</span>
+        </div>
+        <div class="summary-item">
+          <label>Plan</label>
+          <span id="display-plan" class="empty">Not selected</span>
+        </div>
+      </div>
+      <button class="btn-write" id="writeBtn" onclick="writeTag()" disabled>Write to Card</button>
+      <div class="rfid-indicator">
+        <div class="pulse-dot" id="rfid-dot"></div>
+        <span id="rfid-hint">Hold your RFID card near the reader, then press Write.</span>
+      </div>
+      <div id="status-bar"></div>
+    </div>
+  </main>
+
+  <footer>&copy; 2026 OmniAccess &mdash; Secure and Accessible Solutions</footer>
+</div>
+
+<!-- ══════════════════════════ VOUCHER POPUP ════════════════════════════════ -->
+<div id="voucher-overlay">
+  <div class="voucher-box" id="voucher-box">
+    <div class="voucher-banner"></div>
+    <div class="voucher-inner">
+      <div class="voucher-eyebrow" id="v-eyebrow">Partner Offer</div>
+      <div class="voucher-title"  id="v-title">Title</div>
+      <div class="voucher-subtitle" id="v-subtitle">Subtitle</div>
+      <div class="voucher-ticket">
+        <div class="voucher-code" id="v-code">CODE</div>
+        <div class="voucher-discount" id="v-discount"><span>%</span>00</div>
+      </div>
+      <div class="voucher-expiry" id="v-expiry">Valid for 30 days</div>
+      <div class="voucher-actions">
+        <button class="btn-voucher-copy" id="v-copy-btn" onclick="copyVoucherCode()">Copy Code</button>
+        <button class="btn-voucher-dismiss" onclick="dismissVoucher()">No Thanks</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ── T&C countdown ──────────────────────────────────────────────────────────
+  let tcSeconds = 10;
+  const tcInterval = setInterval(() => {
+    tcSeconds--;
+    document.getElementById('countdown').textContent = tcSeconds;
+    if (tcSeconds <= 0) {
+      clearInterval(tcInterval);
+      document.getElementById('denyBtn').classList.add('unlocked');
+      document.getElementById('tc-timer').textContent = 'You may now decline or accept.';
+    }
+  }, 1000);
+
+  function acceptTC() {
+    document.getElementById('tc-overlay').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    scheduleVouchers(); // start voucher timer only after T&C accepted
+  }
+
+  function denyTC() {
+    if (tcSeconds > 0) return;
+    document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:Orbitron,sans-serif;color:#4A6080;font-size:1rem;background:#0A0F1E;">You have declined the Terms &amp; Conditions.<br>Registration is not possible without acceptance.</div>';
+  }
+
+  // ── App logic ──────────────────────────────────────────────────────────────
+  let userName = '';
+  let userPlan = '';
+
+  function setName() {
+    const val = document.getElementById('nameInput').value.trim();
+    if (!val) { showStatus('Please enter your name.', 'err'); return; }
+    userName = val;
+    document.getElementById('display-name').textContent = val;
+    document.getElementById('display-name').classList.remove('empty');
+    checkReady();
+    showStatus('Name confirmed: ' + val, 'ok');
+  }
+
+  function selectPlan(plan, el) {
+    document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    userPlan = plan;
+    document.getElementById('display-plan').textContent = plan;
+    document.getElementById('display-plan').classList.remove('empty');
+    checkReady();
+  }
+
+  function checkReady() {
+    const btn = document.getElementById('writeBtn');
+    const dot = document.getElementById('rfid-dot');
+    if (userName && userPlan) {
+      btn.disabled = false;
+      dot.classList.add('active');
+      document.getElementById('rfid-hint').textContent = 'Ready — hold card near reader, then press Write to Card.';
+    } else {
+      btn.disabled = true;
+      dot.classList.remove('active');
+    }
+  }
+
+  function showStatus(msg, type) {
+    const bar = document.getElementById('status-bar');
+    bar.textContent = msg;
+    bar.className = type;
+  }
+
+  function writeTag() {
+    if (!userName || !userPlan) return;
+    showStatus('Preparing write — hold card steady near reader...', 'info');
+    document.getElementById('writeBtn').disabled = true;
+    fetch('/write?name=' + encodeURIComponent(userName) + '&plan=' + encodeURIComponent(userPlan))
+      .then(r => r.text())
+      .then(resp => {
+        if (resp.startsWith('OK')) {
+          showStatus('Card written! Name: ' + userName + ' | Plan: ' + userPlan, 'ok');
+        } else {
+          showStatus('Error: ' + resp, 'err');
+        }
+        document.getElementById('writeBtn').disabled = false;
+      })
+      .catch(() => {
+        showStatus('Connection error — check device.', 'err');
+        document.getElementById('writeBtn').disabled = false;
+      });
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('nameInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter') setName();
+    });
+  });
+
+  // ── Voucher system ─────────────────────────────────────────────────────────
+
+  const VOUCHERS = [
+    {
+      eyebrow:  'Partner Offer — Fitness',
+      title:    'Parkour Training Session',
+      subtitle: 'Get moving with a free intro parkour class at Urban Flow Academy. First jump\'s on us.',
+      partner:  'Urban Flow Academy',
+      discount: '100',
+      unit:     '%',
+      code:     'OMNI-FLOW',
+      expiry:   'Valid for 30 days from today'
+    },
+    {
+      eyebrow:  'Partner Offer — Adventure',
+      title:    'Trampoline Park Day Pass',
+      subtitle: 'Bounce your way to a great day at AirZone. OmniAccess subscribers get a full day pass discount.',
+      partner:  'AirZone Trampoline Park',
+      discount: '25',
+      unit:     '%',
+      code:     'OMNI-AIR25',
+      expiry:   'Valid for 14 days from today'
+    },
+    {
+      eyebrow:  'Partner Offer — Training',
+      title:    'Free Parkour Workshop',
+      subtitle: 'Level up your agility at Rooftop Runners. Beginner and advanced sessions available.',
+      partner:  'Rooftop Runners',
+      discount: '1',
+      unit:     'x Free',
+      code:     'OMNI-ROOF',
+      expiry:   'Valid for 21 days — one redemption per person'
+    },
+    {
+      eyebrow:  'Partner Offer — Leisure',
+      title:    'Ninja Warrior Circuit',
+      subtitle: 'Test your strength and speed at JumpZone Ninja. OmniAccess members get a discounted entry.',
+      partner:  'JumpZone Ninja',
+      discount: '30',
+      unit:     '%',
+      code:     'OMNI-NINJA',
+      expiry:   'Valid for 30 days from today'
+    },
+    {
+      eyebrow:  'Partner Offer — Wellness',
+      title:    'Aerial Fitness Class',
+      subtitle: 'Try aerial silks or hoop fitness at SkyBody Studio — your first class is heavily discounted.',
+      partner:  'SkyBody Studio',
+      discount: '40',
+      unit:     '%',
+      code:     'OMNI-SKY40',
+      expiry:   'Valid for 7 days from today'
+    },
+    {
+      eyebrow:  'Partner Offer — Fun',
+      title:    'Bungee Fitness Session',
+      subtitle: 'Fly through your workout at BounceForce. A wild full-body session at an exclusive rate.',
+      partner:  'BounceForce',
+      discount: '20',
+      unit:     '%',
+      code:     'OMNI-BNCE',
+      expiry:   'Valid for 30 days from today'
+    }
+  ];
+
+  const CONFETTI_COLORS = ['#00C8FF','#00E5A0','#FFB830','#FF4D6D','#ffffff'];
+  let voucherQueue = [];
+  let voucherTimer = null;
+  let activeVoucherCode = '';
+
+  function shuffleArray(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function scheduleVouchers() {
+    voucherQueue = shuffleArray(VOUCHERS);
+    queueNextVoucher();
+  }
+
+  function queueNextVoucher() {
+    // Show first popup between 8–15s, subsequent ones between 20–45s
+    const delay = (voucherQueue.length === VOUCHERS.length)
+      ? (8000  + Math.random() * 7000)
+      : (20000 + Math.random() * 25000);
+    voucherTimer = setTimeout(showNextVoucher, delay);
+  }
+
+  function showNextVoucher() {
+    if (voucherQueue.length === 0) voucherQueue = shuffleArray(VOUCHERS);
+    const v = voucherQueue.pop();
+    openVoucher(v);
+  }
+
+  function openVoucher(v) {
+    activeVoucherCode = v.code;
+
+    // Fill content
+    document.getElementById('v-eyebrow').textContent   = v.eyebrow;
+    document.getElementById('v-title').textContent     = v.title;
+    document.getElementById('v-subtitle').textContent  = v.subtitle;
+    document.getElementById('v-code').textContent      = v.code;
+    document.getElementById('v-expiry').textContent    = v.expiry;
+
+    // Discount display: "% 25" vs "x Free 1"
+    const discEl = document.getElementById('v-discount');
+    if (v.unit === '%') {
+      discEl.innerHTML = '<span>%</span>' + v.discount;
+    } else if (v.unit === 'x Free') {
+      discEl.innerHTML = v.discount + '<span style="font-size:0.9rem;vertical-align:middle;margin-left:4px">FREE</span>';
+    } else {
+      discEl.textContent = v.discount + v.unit;
+    }
+
+    // Reset copy button
+    const copyBtn = document.getElementById('v-copy-btn');
+    copyBtn.textContent = 'Copy Code';
+    copyBtn.classList.remove('copied');
+
+    // Show overlay
+    const overlay = document.getElementById('voucher-overlay');
+    overlay.classList.add('show');
+
+    // Confetti burst
+    spawnConfetti();
+  }
+
+  function spawnConfetti() {
+    const box = document.getElementById('voucher-box');
+    // Remove old dots
+    box.querySelectorAll('.confetti-dot').forEach(d => d.remove());
+
+    for (let i = 0; i < 18; i++) {
+      const dot = document.createElement('div');
+      dot.className = 'confetti-dot';
+      const angle = Math.random() * 360;
+      const dist  = 60 + Math.random() * 100;
+      const tx = Math.cos(angle * Math.PI / 180) * dist;
+      const ty = Math.sin(angle * Math.PI / 180) * dist - 40;
+      dot.style.setProperty('--tx', tx + 'px');
+      dot.style.setProperty('--ty', ty + 'px');
+      dot.style.background = CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)];
+      dot.style.left = (30 + Math.random() * 60) + '%';
+      dot.style.top  = (20 + Math.random() * 40) + '%';
+      dot.style.animationDelay = (Math.random() * 0.2) + 's';
+      box.appendChild(dot);
+    }
+  }
+
+  function copyVoucherCode() {
+    if (!activeVoucherCode) return;
+    // Clipboard API with fallback
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(activeVoucherCode).catch(() => fallbackCopy(activeVoucherCode));
+    } else {
+      fallbackCopy(activeVoucherCode);
+    }
+    const btn = document.getElementById('v-copy-btn');
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+  }
+
+  function fallbackCopy(text) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch(e) {}
+    document.body.removeChild(ta);
+  }
+
+  function dismissVoucher() {
+    document.getElementById('voucher-overlay').classList.remove('show');
+    queueNextVoucher(); // schedule the next one
+  }
+
+  // Clicking the backdrop also dismisses
+  document.getElementById('voucher-overlay').addEventListener('click', function(e) {
+    if (e.target === this) dismissVoucher();
+  });
+</script>
+</body>
+</html>
