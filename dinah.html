@@ -62,20 +62,6 @@
     text-align:center;
   }
 
-  .kicker{
-    display:inline-flex;
-    align-items:center;
-    gap:8px;
-    padding:6px 16px;
-    border-radius:999px;
-    background:rgba(255,255,255,0.06);
-    border:1px solid rgba(255,255,255,0.15);
-    font-size:0.85rem;
-    letter-spacing:0.03em;
-    color:var(--lime);
-    margin-bottom:28px;
-  }
-
   /* ---------- title with letter effects ---------- */
   h1.title{
     font-family:'Bungee', sans-serif;
@@ -126,18 +112,6 @@
     background:linear-gradient(135deg, var(--pink), var(--violet) 55%, var(--gold));
     box-shadow:0 20px 60px rgba(138,63,252,0.35);
   }
-  .cat-frame::before, .cat-frame::after{
-    content:"";
-    position:absolute;
-    width:26px;
-    height:26px;
-    background:var(--gold);
-    border-radius:50%;
-    top:-10px;
-    box-shadow:0 0 14px rgba(255,203,63,0.8);
-  }
-  .cat-frame::before{ left:-10px; }
-  .cat-frame::after{ right:-10px; }
 
   .video-shell{
     position:relative;
@@ -192,23 +166,15 @@
 <div class="icon-layer" id="iconLayer"></div>
 
 <div class="stage">
-  <div class="kicker">🐆 KATSEYE · WILD ERA</div>
-
   <h1 class="title" id="titleText"></h1>
-
-  <p class="subtitle">
-    This one's a <strong>KATSEYE</strong> birthday. Press play on
-    <strong>"Hootie Frutti,"</strong> the newest single off their EP
-    <strong>WILD</strong>, and let the wild era kick off the celebration.
-  </p>
 
   <div class="player-wrap">
     <div class="cat-frame">
       <div class="video-shell">
         <iframe
           id="ytPlayer"
-          src="https://www.youtube.com/embed/is8UDe2PhKQ?autoplay=1&mute=1&playsinline=1&rel=0"
-          title="KATSEYE - Hootie Frutti Official MV"
+          src=""
+          title="KATSEYE — newest official music video"
           allow="autoplay; encrypted-media; picture-in-picture"
           allowfullscreen>
         </iframe>
@@ -220,7 +186,7 @@
   </div>
 </div>
 
-<footer>Made with 🐾 for a KATSEYE fan · video streamed directly from YouTube</footer>
+<footer>Made by Adi & Jaya</footer>
 
 <script>
   // ---------- animated title ----------
@@ -246,6 +212,34 @@
   }
 
   renderTitle('Dinah');
+
+  // ---------- always play KATSEYE's newest official upload ----------
+  // Fallback video (Hootie Frutti, from the WILD EP) in case the live lookup fails.
+  const FALLBACK_VIDEO_ID = 'is8UDe2PhKQ';
+  const CHANNEL_ID = 'UCA61H4fWOMHikLcUFKyQUog'; // official @katseyeworld channel
+
+  function setVideo(id){
+    const frame = document.getElementById('ytPlayer');
+    frame.src = `https://www.youtube.com/embed/${id}?autoplay=1&mute=1&playsinline=1&rel=0`;
+  }
+
+  async function loadNewestVideo(){
+    const feedUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${CHANNEL_ID}`;
+    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(feedUrl)}`;
+    try{
+      const res = await fetch(proxyUrl);
+      if(!res.ok) throw new Error('feed request failed');
+      const xmlText = await res.text();
+      const xml = new DOMParser().parseFromString(xmlText, 'text/xml');
+      const entry = xml.getElementsByTagName('entry')[0];
+      const videoId = entry.getElementsByTagName('yt:videoId')[0].textContent;
+      setVideo(videoId || FALLBACK_VIDEO_ID);
+    }catch(err){
+      setVideo(FALLBACK_VIDEO_ID);
+    }
+  }
+
+  loadNewestVideo();
 
   // ---------- unmute control ----------
   document.getElementById('unmuteBtn').addEventListener('click', () => {
