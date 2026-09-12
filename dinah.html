@@ -213,17 +213,23 @@
 
   renderTitle('Dinah');
 
-  // ---------- always play KATSEYE's newest official upload ----------
-  // Fallback video (Hootie Frutti, from the WILD EP) in case the live lookup fails.
+  // ---------- always play KATSEYE's newest official MUSIC VIDEO ----------
+  // Fallback video (Hootie Frutti, from the WILD EP) in case the live lookup fails
+  // or nothing in the recent feed looks like an official MV.
   const FALLBACK_VIDEO_ID = 'is8UDe2PhKQ';
   const CHANNEL_ID = 'UCA61H4fWOMHikLcUFKyQUog'; // official @katseyeworld channel
+
+  // Skip uploads that aren't the actual music video, even if flagged "official".
+  const EXCLUDE_PATTERN = /(teaser|trailer|shorts?|behind|practice|live|lyric|audio only|visualizer|preview|reaction|interview|vlog|episode|ep\.\s?\d)/i;
+  // A title counts as "the MV" only if it explicitly says so.
+  const MV_PATTERN = /(official\s*(music\s*)?video|\bmv\b)/i;
 
   function setVideo(id){
     const frame = document.getElementById('ytPlayer');
     frame.src = `https://www.youtube.com/embed/${id}?autoplay=1&mute=1&playsinline=1&rel=0`;
   }
 
-  async function loadNewestVideo(){
+  async function loadNewestMV(){
     const feedUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${CHANNEL_ID}`;
     const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(feedUrl)}`;
     try{
@@ -231,15 +237,24 @@
       if(!res.ok) throw new Error('feed request failed');
       const xmlText = await res.text();
       const xml = new DOMParser().parseFromString(xmlText, 'text/xml');
-      const entry = xml.getElementsByTagName('entry')[0];
-      const videoId = entry.getElementsByTagName('yt:videoId')[0].textContent;
+      const entries = Array.from(xml.getElementsByTagName('entry'));
+
+      // Walk the feed newest-first and take the first upload whose title
+      // reads like an official music video, skipping teasers/lyric videos/etc.
+      const mvEntry = entries.find((entry) => {
+        const title = entry.getElementsByTagName('title')[0]?.textContent || '';
+        return MV_PATTERN.test(title) && !EXCLUDE_PATTERN.test(title);
+      });
+
+      if(!mvEntry) throw new Error('no MV found in recent uploads');
+      const videoId = mvEntry.getElementsByTagName('yt:videoId')[0].textContent;
       setVideo(videoId || FALLBACK_VIDEO_ID);
     }catch(err){
       setVideo(FALLBACK_VIDEO_ID);
     }
   }
 
-  loadNewestVideo();
+  loadNewestMV();
 
   // ---------- unmute control ----------
   document.getElementById('unmuteBtn').addEventListener('click', () => {
