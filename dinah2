@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Happy Birthday — KATSEYE Edition</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0e0518;
+    --ink2:#170a26;
+    --pink:#ff2f87;
+    --lime:#c8ff3d;
+    --gold:#ffcb3f;
+    --violet:#8a3ffc;
+    --cream:#fff6ec;
+  }
+
+  *{box-sizing:border-box;}
+
+  html,body{
+    margin:0;
+    min-height:100%;
+    background:
+      radial-gradient(circle at 15% 10%, rgba(138,63,252,0.35), transparent 45%),
+      radial-gradient(circle at 85% 20%, rgba(255,47,135,0.30), transparent 50%),
+      radial-gradient(circle at 50% 90%, rgba(200,255,61,0.15), transparent 55%),
+      var(--ink);
+    color:var(--cream);
+    font-family:'Space Grotesk', sans-serif;
+    overflow-x:hidden;
+  }
+
+  /* ---------- floating cat-eye / star icons ---------- */
+  .icon-layer{
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    z-index:1;
+    overflow:hidden;
+  }
+  .floater{
+    position:absolute;
+    font-size:2rem;
+    opacity:0.55;
+    filter:drop-shadow(0 0 10px rgba(255,255,255,0.15));
+    animation:drift linear infinite;
+  }
+  @keyframes drift{
+    0%{ transform:translate(0,100vh) rotate(0deg); }
+    100%{ transform:translate(var(--dx,40px), -15vh) rotate(360deg); }
+  }
+
+  /* ---------- layout ---------- */
+  .stage{
+    position:relative;
+    z-index:2;
+    max-width:760px;
+    margin:0 auto;
+    padding:56px 24px 90px;
+    text-align:center;
+  }
+
+  /* ---------- title with letter effects ---------- */
+  h1.title{
+    font-family:'Bungee', sans-serif;
+    font-weight:400;
+    font-size:clamp(2.1rem, 8vw, 4.2rem);
+    line-height:1.05;
+    margin:0 0 18px;
+    text-shadow:0 0 24px rgba(255,47,135,0.35);
+  }
+  h1.title .word{ display:inline-block; margin:0 6px; }
+  h1.title .letter{
+    display:inline-block;
+    animation:bounceIn 0.6s ease both, wave 3.2s ease-in-out infinite;
+    background:linear-gradient(180deg, var(--gold), var(--pink) 60%, var(--violet));
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+  }
+  @keyframes bounceIn{
+    0%{ opacity:0; transform:translateY(40px) scale(0.6) rotate(-8deg); }
+    70%{ opacity:1; transform:translateY(-6px) scale(1.05) rotate(2deg); }
+    100%{ opacity:1; transform:translateY(0) scale(1) rotate(0deg); }
+  }
+  @keyframes wave{
+    0%, 100%{ transform:translateY(0); }
+    50%{ transform:translateY(-8px); }
+  }
+
+  /* ---------- audio control (no video shown, song only) ---------- */
+  .audio-control{
+    margin:0 0 34px;
+  }
+  .audio-control button{
+    background:linear-gradient(135deg, var(--pink), var(--violet));
+    color:var(--cream);
+    border:none;
+    padding:12px 26px;
+    border-radius:999px;
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:700;
+    font-size:1rem;
+    cursor:pointer;
+    box-shadow:0 10px 30px rgba(255,47,135,0.35);
+    transition:transform 0.15s ease;
+  }
+  .audio-control button:hover{ transform:translateY(-2px); }
+
+  /* The song still streams from YouTube's official upload — this iframe is
+     just visually hidden so only the audio plays, no video. */
+  .hidden-player{
+    position:absolute;
+    width:1px;
+    height:1px;
+    opacity:0;
+    overflow:hidden;
+    pointer-events:none;
+  }
+
+  /* ---------- photo frame ---------- */
+  .player-wrap{
+    position:relative;
+    margin:0 auto 22px;
+    max-width:520px;
+  }
+  .cat-frame{
+    position:relative;
+    border-radius:28px;
+    padding:10px;
+    background:linear-gradient(135deg, var(--pink), var(--violet) 55%, var(--gold));
+    box-shadow:0 20px 60px rgba(138,63,252,0.35);
+  }
+
+  .carousel{
+    position:relative;
+    width:100%;
+    aspect-ratio:4/5;
+    border-radius:20px;
+    overflow:hidden;
+    background:#000;
+  }
+  .carousel img{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    opacity:0;
+    transition:opacity 1s ease;
+  }
+  .carousel img.active{ opacity:1; }
+  .carousel .empty-note{
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+    font-size:0.95rem;
+    color:rgba(255,246,236,0.8);
+    text-align:center;
+  }
+
+  footer{
+    position:relative;
+    z-index:2;
+    text-align:center;
+    padding:20px;
+    font-size:0.8rem;
+    color:rgba(255,246,236,0.4);
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .letter, .floater{ animation:none !important; }
+    .carousel img{ transition:none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="icon-layer" id="iconLayer"></div>
+
+<div class="stage">
+  <h1 class="title" id="titleText"></h1>
+
+  <div class="audio-control">
+    <button id="playBtn">▶ Play the song</button>
+  </div>
+
+  <div class="player-wrap">
+    <div class="cat-frame">
+      <div class="carousel" id="photoCarousel">
+        <p class="empty-note">Loading photos…</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Audio only: streams the official MV from YouTube but stays hidden. -->
+  <iframe
+    id="ytPlayer"
+    class="hidden-player"
+    src=""
+    title="KATSEYE — newest song (audio)"
+    allow="autoplay; encrypted-media"
+    tabindex="-1">
+  </iframe>
+</div>
+
+<footer>Made by Adi & Jaya</footer>
+
+<script>
+  // ---------- animated title ----------
+  const titleEl = document.getElementById('titleText');
+
+  function renderTitle(name){
+    const text = `Happy Birthday, ${name}!`;
+    titleEl.innerHTML = '';
+    let letterIndex = 0;
+    text.split(' ').forEach((word) => {
+      const wordSpan = document.createElement('span');
+      wordSpan.className = 'word';
+      word.split('').forEach((ch) => {
+        const span = document.createElement('span');
+        span.className = 'letter';
+        span.textContent = ch;
+        span.style.animationDelay = `${letterIndex * 0.05}s, ${0.6 + letterIndex * 0.08}s`;
+        wordSpan.appendChild(span);
+        letterIndex++;
+      });
+      titleEl.appendChild(wordSpan);
+    });
+  }
+
+  renderTitle('Dinah');
+
+  // ---------- always play KATSEYE's newest official MUSIC VIDEO (audio only) ----------
+  // Fallback video (Hootie Frutti, from the WILD EP) in case the live lookup fails
+  // or nothing in the recent feed looks like an official MV.
+  const FALLBACK_VIDEO_ID = 'is8UDe2PhKQ';
+  const CHANNEL_ID = 'UCA61H4fWOMHikLcUFKyQUog'; // official @katseyeworld channel
+
+  // Skip uploads that aren't the actual music video, even if flagged "official".
+  const EXCLUDE_PATTERN = /(teaser|trailer|shorts?|behind|practice|live|lyric|audio only|visualizer|preview|reaction|interview|vlog|episode|ep\.\s?\d)/i;
+  // A title counts as "the MV" only if it explicitly says so.
+  const MV_PATTERN = /(official\s*(music\s*)?video|\bmv\b)/i;
+
+  function setVideo(id){
+    const frame = document.getElementById('ytPlayer');
+    frame.src = `https://www.youtube.com/embed/${id}?autoplay=1&mute=1&playsinline=1&rel=0`;
+  }
+
+  async function loadNewestMV(){
+    const feedUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${CHANNEL_ID}`;
+    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(feedUrl)}`;
+    try{
+      const res = await fetch(proxyUrl);
+      if(!res.ok) throw new Error('feed request failed');
+      const xmlText = await res.text();
+      const xml = new DOMParser().parseFromString(xmlText, 'text/xml');
+      const entries = Array.from(xml.getElementsByTagName('entry'));
+
+      const mvEntry = entries.find((entry) => {
+        const title = entry.getElementsByTagName('title')[0]?.textContent || '';
+        return MV_PATTERN.test(title) && !EXCLUDE_PATTERN.test(title);
+      });
+
+      if(!mvEntry) throw new Error('no MV found in recent uploads');
+      const videoId = mvEntry.getElementsByTagName('yt:videoId')[0].textContent;
+      setVideo(videoId || FALLBACK_VIDEO_ID);
+    }catch(err){
+      setVideo(FALLBACK_VIDEO_ID);
+    }
+  }
+
+  loadNewestMV();
+
+  // ---------- play / unmute control ----------
+  document.getElementById('playBtn').addEventListener('click', (e) => {
+    const frame = document.getElementById('ytPlayer');
+    frame.src = frame.src.replace('mute=1', 'mute=0');
+    e.target.textContent = '🎵 Playing';
+    e.target.disabled = true;
+  });
+
+  // ---------- rotating photo carousel from /dinahphotos ----------
+  const PHOTO_FOLDER = 'dinahphotos';
+  const MAX_PHOTOS = 30;              // stops looking past this number
+  const EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp'];
+  const ROTATE_MS = 4000;
+
+  function checkImage(src){
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve(src);
+      img.onerror = () => resolve(null);
+      img.src = src;
+    });
+  }
+
+  async function findPhotos(){
+    const found = [];
+    for(let i = 1; i <= MAX_PHOTOS; i++){
+      let matched = null;
+      for(const ext of EXTENSIONS){
+        const src = `${PHOTO_FOLDER}/${i}.${ext}`;
+        const ok = await checkImage(src);
+        if(ok){ matched = ok; break; }
+      }
+      if(matched) found.push(matched);
+    }
+    return found;
+  }
+
+  async function startCarousel(){
+    const container = document.getElementById('photoCarousel');
+    const photos = await findPhotos();
+
+    container.innerHTML = '';
+
+    if(photos.length === 0){
+      const note = document.createElement('p');
+      note.className = 'empty-note';
+      note.textContent = `Add photos to the "${PHOTO_FOLDER}" folder, named 1.jpg, 2.jpg, 3.jpg, and so on.`;
+      container.appendChild(note);
+      return;
+    }
+
+    photos.forEach((src, i) => {
+      const img = document.createElement('img');
+      img.src = src;
+      img.alt = 'Photo of Dinah';
+      if(i === 0) img.classList.add('active');
+      container.appendChild(img);
+    });
+
+    if(photos.length > 1){
+      let idx = 0;
+      setInterval(() => {
+        const imgs = container.querySelectorAll('img');
+        imgs[idx].classList.remove('active');
+        idx = (idx + 1) % imgs.length;
+        imgs[idx].classList.add('active');
+      }, ROTATE_MS);
+    }
+  }
+
+  startCarousel();
+
+  // ---------- floating icons ----------
+  const icons = ['🐆','⭐','✨','👁️','💜','🦄','🎂','💗'];
+  const layer = document.getElementById('iconLayer');
+  const count = window.innerWidth < 600 ? 12 : 20;
+
+  for(let i = 0; i < count; i++){
+    const el = document.createElement('span');
+    el.className = 'floater';
+    el.textContent = icons[Math.floor(Math.random() * icons.length)];
+    const left = Math.random() * 100;
+    const duration = 14 + Math.random() * 14;
+    const delay = Math.random() * -20;
+    const dx = (Math.random() * 160 - 80) + 'px';
+    const size = 1.2 + Math.random() * 1.8;
+    el.style.left = left + 'vw';
+    el.style.setProperty('--dx', dx);
+    el.style.animationDuration = duration + 's';
+    el.style.animationDelay = delay + 's';
+    el.style.fontSize = size + 'rem';
+    layer.appendChild(el);
+  }
+</script>
+
+</body>
+</html>
